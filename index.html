@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ionic Bonding Lab</title>
+<style>
+html{color-scheme:light}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: lab bench. Name strip + four station tabs; each station is a diagram stage beside a control column (stacks on phones). */
+:root{
+  --bg:#e9eff3; --surface:#ffffff; --surface-2:#f3f6f8; --ink:#14212b; --muted:#53656f; --line:#c9d4dc;
+  --cation:#c2650f; --cation-soft:#fbe5cd; --anion:#1d6aa8; --anion-soft:#d5e7f5;
+  --good:#1f7d48; --good-soft:#d9f0e2; --bad:#b3382f; --bad-soft:#f7dcd8; --water:#6aa8cf; --melt:#f6d9b8;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e161d; --surface:#16212a; --surface-2:#1c2a35; --ink:#e4ecf2; --muted:#97a8b5; --line:#2c3c49;
+  --cation:#f2a457; --cation-soft:#3c2915; --anion:#64b3ea; --anion-soft:#14314a;
+  --good:#62cf91; --good-soft:#15352a; --bad:#f2837a; --bad-soft:#3d1d1b; --water:#3b7fab; --melt:#4a3420; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e161d; --surface:#16212a; --surface-2:#1c2a35; --ink:#e4ecf2; --muted:#97a8b5; --line:#2c3c49;
+  --cation:#f2a457; --cation-soft:#3c2915; --anion:#64b3ea; --anion-soft:#14314a;
+  --good:#62cf91; --good-soft:#15352a; --bad:#f2837a; --bad-soft:#3d1d1b; --water:#3b7fab; --melt:#4a3420; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.page{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 48px;display:grid;gap:22px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand svg{flex:none}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{margin:2px 0 0;font-family:var(--f-display);font-weight:800;font-size:clamp(1.9rem,4.2vw,2.7rem);line-height:1.02;letter-spacing:-.025em;text-wrap:balance}
+h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:1.06rem;letter-spacing:-.005em}
+p{margin:0}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{font:inherit;font-weight:700;font-size:.92rem;border:0;background:transparent;color:var(--muted);padding:8px 13px;border-radius:10px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.tabs button .n{font-family:var(--f-mono);font-size:.72rem;opacity:.8}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+:focus-visible{outline:3px solid var(--anion);outline-offset:2px}
+[role="tabpanel"]{display:grid;gap:22px}
+.intro{max-width:68ch;color:var(--muted)}
+.intro b{color:var(--ink)}
+.station{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:840px){.station{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.stage svg{width:100%;height:auto;display:block;max-width:100%}
+.controls{display:grid;gap:20px;min-width:0}
+.ctl{display:grid;gap:9px;min-width:0}
+.small{font-size:.88rem;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-weight:700;font-size:.93rem;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* periodic picker */
+.ptable{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.ghead{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);text-align:center}
+.tile{aspect-ratio:1/1;max-width:100%;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;position:relative;display:grid;place-items:center;padding:0}
+.tile .z{position:absolute;top:3px;left:5px;font-family:var(--f-mono);font-size:.6rem;color:var(--muted)}
+.tile .s{font-family:var(--f-display);font-weight:800;font-size:clamp(1rem,2.4vw,1.3rem);line-height:1}
+.tile.metal{background:var(--cation-soft)}
+.tile.non{background:var(--anion-soft)}
+.tile[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--ink)}
+.tile.empty{border-style:dashed;background:transparent;cursor:default}
+.key{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted)}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1px solid var(--line)}
+.key .km{background:var(--cation-soft)} .key .kn{background:var(--anion-soft)}
+/* readouts */
+.readout{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:520px){.readout{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.lbl{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.readout b{font-family:var(--f-mono);font-size:1.08rem;font-variant-numeric:tabular-nums;font-weight:700}
+.verdict{border-radius:var(--r);padding:12px 14px;background:var(--surface);border:1px solid var(--line);display:grid;gap:4px}
+.verdict.good{background:var(--good-soft);border-color:var(--good)}
+.verdict.bad{background:var(--bad-soft);border-color:var(--bad)}
+.verdict strong{font-family:var(--f-display);font-size:1.08rem;font-weight:600}
+details.explain{border-top:1px solid var(--line);padding-top:10px}
+details.explain summary{cursor:pointer;font-weight:700}
+details.explain p{margin-top:6px;color:var(--muted);max-width:62ch}
+/* svg classes */
+.t-ink{fill:var(--ink);font-family:var(--f-mono)}
+.t-sym{fill:var(--ink);font-family:var(--f-display);font-weight:800}
+.t-muted{fill:var(--muted);font-family:var(--f-mono)}
+.shell{fill:none;stroke:var(--muted);stroke-width:1.6}
+.shell.gone{stroke-dasharray:4 6;opacity:.55}
+.nucleus{fill:var(--surface-2);stroke:var(--ink);stroke-width:1.5}
+.e-dot{fill:var(--ink)}
+.e-hole{fill:none;stroke:var(--muted);stroke-width:1.4;stroke-dasharray:2 3}
+.x-an{stroke:var(--anion);stroke-width:2.6;stroke-linecap:round;fill:none}
+.x-cat{stroke:var(--cation);stroke-width:2.8;stroke-linecap:round;fill:none}
+.d-an{fill:var(--anion)}
+.br-pos{stroke:var(--cation);stroke-width:3;fill:none}
+.br-neg{stroke:var(--anion);stroke-width:3;fill:none}
+.q-pos{fill:var(--cation);font-family:var(--f-mono);font-weight:700}
+.q-neg{fill:var(--anion);font-family:var(--f-mono);font-weight:700}
+.ion-c{fill:var(--cation-soft);stroke:var(--cation);stroke-width:2}
+.ion-a{fill:var(--anion-soft);stroke:var(--anion);stroke-width:2}
+.repel{stroke:var(--bad);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.force{stroke:var(--ink);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+/* bonding */
+.eq{font-family:var(--f-mono);font-size:1.05rem;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.eq .arrow{color:var(--muted)}
+.eq .ans{color:var(--good)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.84rem;color:var(--muted)}
+.legend .lx{color:var(--cation);font-weight:700;font-family:var(--f-mono)}
+.legend .ld{color:var(--anion);font-weight:700;font-family:var(--f-mono)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-width:46px}
+.chip.metal[aria-pressed="true"]{background:var(--cation-soft);border-color:var(--cation);box-shadow:inset 0 0 0 1px var(--cation)}
+.chip.non[aria-pressed="true"]{background:var(--anion-soft);border-color:var(--anion);box-shadow:inset 0 0 0 1px var(--anion)}
+.predict{display:flex;gap:8px;flex-wrap:wrap}
+.predict input{font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:9em;flex:1 1 7em;min-width:0}
+.msg{font-size:.92rem;min-height:1.4em}
+.msg.good{color:var(--good)} .msg.bad{color:var(--bad)}
+.narr{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.95rem}
+.narr .count{display:block;font-family:var(--f-mono);font-size:.78rem;color:var(--muted);margin-bottom:2px}
+.balance{display:grid;gap:6px;border-radius:var(--r);padding:12px 14px;border:1px solid var(--good);background:var(--good-soft)}
+.balance .big{font-family:var(--f-display);font-weight:800;font-size:1.6rem;line-height:1}
+.balance table{border-collapse:collapse;font-family:var(--f-mono);font-size:.88rem;font-variant-numeric:tabular-nums}
+.balance td{padding:2px 12px 2px 0}
+/* properties */
+.stage-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:inline-block;padding:3px 11px;border-radius:999px;font-weight:700;font-size:.82rem;background:var(--surface-2);border:1px solid var(--line)}
+.pill.liquid{background:var(--cation-soft);border-color:var(--cation)}
+.pill.aq{background:var(--anion-soft);border-color:var(--anion)}
+.pill.on{background:var(--good-soft);border-color:var(--good);color:var(--ink)}
+#latCanvas{width:100%;aspect-ratio:16/10;max-width:100%;display:block;border-radius:8px;background:var(--surface-2)}
+.caption{font-size:.95rem;max-width:70ch}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content;max-width:100%}
+.seg button{font:inherit;font-weight:700;border:0;background:var(--surface);color:var(--muted);padding:8px 16px;cursor:pointer;font-family:var(--f-mono)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.slider{position:relative;padding-top:22px}
+.slider input{width:100%;accent-color:var(--cation);margin:0}
+.mp-mark{position:absolute;top:0;transform:translateX(-50%);font-family:var(--f-mono);font-size:.72rem;color:var(--cation);font-weight:700;white-space:nowrap}
+.mp-mark::after{content:"";display:block;width:2px;height:10px;background:var(--cation);margin:1px auto 0}
+.scale{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;font-weight:700;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--ink);margin:0}
+.check.dis{opacity:.5;cursor:not-allowed}
+.findings{display:grid;gap:8px}
+.finding{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.finding .ft{font-weight:700}
+.finding .fd{grid-column:1/-1;font-size:.88rem;color:var(--muted)}
+.finding .st{font-size:.74rem;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--line);align-self:start;white-space:nowrap}
+.finding.found{border-color:var(--good)}
+.finding.found .st{background:var(--good-soft);border-color:var(--good)}
+#topLayer{transition:transform .7s cubic-bezier(.4,0,.2,1);transform-box:fill-box;transform-origin:center}
+#forceArrow,#repelMarks{transition:opacity .35s}
+/* quiz */
+.quizbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;max-width:860px}
+.score{font-family:var(--f-display);font-weight:800;font-size:1.4rem}
+.quiz{display:grid;gap:14px;max-width:860px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.q .qn{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);font-weight:700}
+.q .qt{font-weight:700;font-size:1.02rem}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.opts{grid-template-columns:minmax(0,1fr)}}
+.opt{font:inherit;text-align:left;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--good-soft);border-color:var(--good);font-weight:700}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.fb{font-size:.92rem;color:var(--muted)}
+.fb b{color:var(--ink)}
+footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;max-width:90ch}
+sub,sup{font-size:.68em;line-height:0}
+@media (prefers-reduced-motion: reduce){#topLayer,#forceArrow,#repelMarks{transition-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="brand">
+      <svg width="58" height="44" viewBox="0 0 58 44" aria-hidden="true">
+        <circle cx="38" cy="22" r="18" class="ion-a"/><text x="38" y="28" text-anchor="middle" class="q-neg" font-size="17">−</text>
+        <circle cx="13" cy="24" r="11" class="ion-c"/><text x="13" y="29" text-anchor="middle" class="q-pos" font-size="14">+</text>
+      </svg>
+      <div>
+        <p class="eyebrow">Year 9 Chemistry · Structure and bonding</p>
+        <h1>Ionic Bonding Lab</h1>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Lab stations">
+      <button role="tab" id="tab-ions" aria-controls="p-ions" aria-selected="true"><span class="n">1</span>Make an ion</button>
+      <button role="tab" id="tab-bonding" aria-controls="p-bonding" aria-selected="false" tabindex="-1"><span class="n">2</span>Ionic bonding</button>
+      <button role="tab" id="tab-properties" aria-controls="p-properties" aria-selected="false" tabindex="-1"><span class="n">3</span>Properties</button>
+      <button role="tab" id="tab-quiz" aria-controls="p-quiz" aria-selected="false" tabindex="-1"><span class="n">4</span>Check yourself</button>
+    </nav>
+  </header>
+
+  <section id="p-ions" role="tabpanel" aria-labelledby="tab-ions">
+    <p class="intro">An <b>ion</b> is an atom that has lost or gained electrons, so it has an overall charge. Pick an element, then remove or add electrons until its outer shell is full.</p>
+    <div class="station">
+      <div class="stage">
+        <svg id="ionSvg" viewBox="0 0 400 360" role="img" aria-label="Electron shell diagram"></svg>
+        <div class="readout">
+          <div><span class="lbl">Particle</span><b id="ionSymbol">Na</b></div>
+          <div><span class="lbl">Protons</span><b id="ionP">11</b></div>
+          <div><span class="lbl">Electrons</span><b id="ionE">11</b></div>
+          <div><span class="lbl">Charge</span><b id="ionQ">0</b></div>
+          <div><span class="lbl">Arrangement</span><b id="ionCfg">2,8,1</b></div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="ctl">
+          <h2>Pick an element</h2>
+          <div class="ptable" id="ptable"></div>
+          <div class="key"><span><i class="km"></i>Metal</span><span><i class="kn"></i>Non-metal</span><span>Small number = atomic number</span></div>
+        </div>
+        <div class="ctl">
+          <h2>Move electrons</h2>
+          <div class="row">
+            <button class="btn primary" id="eRemove">Remove an electron</button>
+            <button class="btn primary" id="eAdd">Add an electron</button>
+            <button class="btn" id="eReset">Reset atom</button>
+          </div>
+          <p class="small">Dashed rings show where electrons were removed. Blue crosses are electrons that have been added.</p>
+        </div>
+        <div class="verdict" id="ionVerdict" aria-live="polite"></div>
+        <details class="explain">
+          <summary>Why do atoms form ions?</summary>
+          <p>Atoms are most stable with a full outer shell, like the noble gases. Metals have only 1, 2 or 3 outer electrons, so it is easiest for them to lose these and form positive ions. Non-metals have 5, 6 or 7 outer electrons, so it is easiest to gain 3, 2 or 1 and form negative ions. The group number tells you how many outer electrons an atom has.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-bonding" role="tabpanel" aria-labelledby="tab-bonding" hidden>
+    <p class="intro">In <b>ionic bonding</b>, a metal atom transfers electrons to a non-metal atom. Both become ions with full outer shells, and the opposite charges attract. Choose a pair, predict the formula, then move the electrons one at a time.</p>
+    <div class="station">
+      <div class="stage">
+        <div class="eq" id="bondEq"></div>
+        <svg id="bondSvg" viewBox="0 0 600 360" role="img" aria-label="Dot and cross diagram"></svg>
+        <div class="legend"><span><span class="lx">×</span> electron from the metal</span><span><span class="ld">●</span> electron from the non-metal</span><span>Only outer shells are shown</span></div>
+      </div>
+      <div class="controls">
+        <div class="ctl"><h2>Metal</h2><div class="chips" id="metalPick"></div></div>
+        <div class="ctl"><h2>Non-metal</h2><div class="chips" id="nonPick"></div></div>
+        <div class="ctl">
+          <h2>Predict the formula</h2>
+          <div class="predict"><input id="predictIn" type="text" placeholder="e.g. NaCl" autocomplete="off" spellcheck="false" aria-label="Your predicted formula"><button class="btn" id="predictBtn">Check</button></div>
+          <p class="msg" id="predictMsg" aria-live="polite"></p>
+        </div>
+        <div class="ctl">
+          <h2>Transfer electrons</h2>
+          <div class="row">
+            <button class="btn primary" id="stepBtn">Transfer 1 electron</button>
+            <button class="btn" id="playBtn">Play all</button>
+            <button class="btn" id="bondReset">Reset</button>
+          </div>
+          <div class="narr" id="bondNarr" aria-live="polite"></div>
+        </div>
+        <div class="balance" id="bondBalance" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-properties" role="tabpanel" aria-labelledby="tab-properties" hidden>
+    <p class="intro">Ionic compounds form a <b>giant ionic lattice</b>: a regular arrangement of millions of oppositely charged ions held by strong electrostatic forces in every direction. Test the lattice to explain its properties.</p>
+    <div class="station">
+      <div class="stage">
+        <div class="stage-head">
+          <span class="row"><span class="pill" id="propState">Solid</span><span class="pill" id="propBulb">Bulb off</span></span>
+          <span class="mono" id="propTemp">25 °C</span>
+        </div>
+        <canvas id="latCanvas" aria-label="Simulation of ions in a lattice between two electrodes"></canvas>
+        <p class="caption" id="propCaption" aria-live="polite"></p>
+      </div>
+      <div class="controls">
+        <div class="ctl">
+          <h2>Compound</h2>
+          <div class="seg" id="cmpPick"><button data-c="NaCl" aria-pressed="true">NaCl</button><button data-c="MgO" aria-pressed="false">MgO</button></div>
+          <p class="small" id="cmpInfo"></p>
+        </div>
+        <div class="ctl">
+          <h2>Heat it</h2>
+          <div class="slider"><span class="mp-mark" id="mpMark">melts 801 °C</span><input type="range" id="tempSlider" min="20" max="1400" step="10" value="25" aria-label="Temperature in degrees Celsius"></div>
+          <div class="scale"><span>20 °C</span><span id="tMax">1400 °C</span></div>
+        </div>
+        <div class="ctl">
+          <h2>Test conductivity</h2>
+          <label class="check" id="waterLbl"><input type="checkbox" id="waterTog">Dissolve it in water</label>
+          <label class="check"><input type="checkbox" id="circuitTog" checked>Circuit switched on</label>
+          <p class="small" id="waterNote"></p>
+        </div>
+        <div class="ctl">
+          <h2>Your findings</h2>
+          <div class="findings" id="findings"></div>
+        </div>
+      </div>
+    </div>
+    <div class="station">
+      <div class="stage">
+        <svg id="brittleSvg" viewBox="0 0 520 300" role="img" aria-label="Layers of ions in a crystal"></svg>
+      </div>
+      <div class="controls">
+        <div class="ctl">
+          <h2>Hit the crystal</h2>
+          <p>Each Na<sup>+</sup> ion sits next to Cl<sup>−</sup> ions, above, below and beside it. What happens if a force pushes one layer sideways?</p>
+          <div class="row"><button class="btn primary" id="hitBtn">Strike the crystal</button><button class="btn" id="hitReset">Reset</button></div>
+          <p class="msg" id="hitMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="quizbar">
+      <p class="intro">Ten questions on ions, ionic bonding and the properties of ionic compounds. Pick an answer to see the explanation.</p>
+      <div class="row"><span class="score" id="score">0 / 10</span><button class="btn" id="quizReset">Start again</button></div>
+    </div>
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <footer>Ionic radii used for ion sizes: Na<sup>+</sup> 102 pm, Cl<sup>−</sup> 181 pm, Mg<sup>2+</sup> 72 pm, O<sup>2−</sup> 140 pm. Melting points: NaCl 801 °C, MgO 2852 °C. Diagrams are 2D models of a 3D lattice.</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function el(tag, attrs, parent, text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!=null) e.textContent=text; if(parent) parent.appendChild(e); return e; }
+function cross(svg,x,y,s,cls){ el('path',{d:`M${x-s} ${y-s}L${x+s} ${y+s}M${x+s} ${y-s}L${x-s} ${y+s}`,class:cls},svg); }
+const pl = (n,w) => `${n} ${w}${n===1?'':'s'}`;
+function sup(q){ if(q===0) return ''; const m=Math.abs(q); return `<sup>${m>1?m:''}${q>0?'+':'−'}</sup>`; }
+function qText(q){ if(q===0) return '0'; return `${Math.abs(q)}${q>0?'+':'−'}`; }
+function qShort(q){ const m=Math.abs(q); return `${m>1?m:''}${q>0?'+':'−'}`; }
+
+/* ---------- tabs ---------- */
+const TABS=['ions','bonding','properties','quiz'];
+function showTab(id){
+  TABS.forEach(t=>{ const on=t===id, b=$('#tab-'+t); b.setAttribute('aria-selected',on); b.tabIndex=on?0:-1; $('#p-'+t).hidden=!on; });
+  if(id==='properties' && window.sizeCanvas) sizeCanvas();
+}
+TABS.forEach((t,i)=>{
+  const b=$('#tab-'+t);
+  b.addEventListener('click',()=>showTab(t));
+  b.addEventListener('keydown',e=>{ if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return; const n=TABS[(i+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length]; showTab(n); $('#tab-'+n).focus(); });
+});
+
+/* ---------- element data (Z ≤ 20, shells fill 2,8,8) ---------- */
+const EL={
+  Li:{z:3,n:4,name:'Lithium',group:1,metal:true,period:2},
+  Na:{z:11,n:12,name:'Sodium',group:1,metal:true,period:3},
+  K:{z:19,n:20,name:'Potassium',group:1,metal:true,period:4},
+  Mg:{z:12,n:12,name:'Magnesium',group:2,metal:true,period:3},
+  Ca:{z:20,n:20,name:'Calcium',group:2,metal:true,period:4},
+  Al:{z:13,n:14,name:'Aluminium',group:3,metal:true,period:3},
+  N:{z:7,n:7,name:'Nitrogen',group:5,metal:false,period:2,ion:'nitride'},
+  O:{z:8,n:8,name:'Oxygen',group:6,metal:false,period:2,ion:'oxide'},
+  S:{z:16,n:16,name:'Sulfur',group:6,metal:false,period:3,ion:'sulfide'},
+  F:{z:9,n:10,name:'Fluorine',group:7,metal:false,period:2,ion:'fluoride'},
+  Cl:{z:17,n:18,name:'Chlorine',group:7,metal:false,period:3,ion:'chloride'}
+};
+const ionCharge = s => EL[s].metal ? EL[s].group : -(8-EL[s].group);
+function cfg(e){ const caps=[2,8,8,8], out=[]; let r=e; for(const c of caps){ if(r<=0) break; const t=Math.min(c,r); out.push(t); r-=t; } return out; }
+const NOBLE={2:'helium',10:'neon',18:'argon'};
+
+/* ---------- station 1: make an ion ---------- */
+const ION={sym:'Na',e:11};
+const GROUPS=[1,2,3,5,6,7];
+(function buildTable(){
+  const t=$('#ptable');
+  GROUPS.forEach(g=>{ const h=document.createElement('div'); h.className='ghead'; h.textContent='Gp '+g; t.appendChild(h); });
+  for(const p of [2,3,4]) for(const g of GROUPS){
+    const sym=Object.keys(EL).find(k=>EL[k].period===p&&EL[k].group===g);
+    if(!sym){ const d=document.createElement('div'); d.className='tile empty'; d.setAttribute('aria-hidden','true'); t.appendChild(d); continue; }
+    const b=document.createElement('button'); b.className='tile '+(EL[sym].metal?'metal':'non'); b.dataset.sym=sym;
+    b.setAttribute('aria-label',EL[sym].name); b.setAttribute('aria-pressed',sym===ION.sym);
+    b.innerHTML=`<span class="z">${EL[sym].z}</span><span class="s">${sym}</span>`;
+    b.addEventListener('click',()=>{ ION.sym=sym; ION.e=EL[sym].z; t.querySelectorAll('.tile[data-sym]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.sym===sym)); drawIon(); });
+    t.appendChild(b);
+  }
+})();
+const SLOT8=[-104,-14,76,166,-76,14,104,194]; // singles first (N,E,S,W) then pairs
+function drawIon(){
+  const d=EL[ION.sym], svg=$('#ionSvg'); svg.textContent='';
+  const A=cfg(d.z), I=cfg(ION.e), R=[62,95,128,160], cx=190, cy=180, q=d.z-ION.e;
+  const n=Math.max(A.length,I.length);
+  for(let k=0;k<n;k++){
+    const a=A[k]||0, c=I[k]||0, ang=k===0?[180,0]:SLOT8;
+    el('circle',{cx,cy,r:R[k],class:'shell'+(c===0?' gone':'')},svg);
+    for(let i=0;i<Math.max(a,c);i++){
+      const t=ang[i]*Math.PI/180, x=cx+R[k]*Math.cos(t), y=cy+R[k]*Math.sin(t);
+      if(i<Math.min(a,c)) el('circle',{cx:x,cy:y,r:6.5,class:'e-dot'},svg);
+      else if(c<a) el('circle',{cx:x,cy:y,r:6.5,class:'e-hole'},svg);
+      else cross(svg,x,y,6,'x-an');
+    }
+  }
+  el('circle',{cx,cy,r:30,class:'nucleus'},svg);
+  el('text',{x:cx,y:cy-2,'text-anchor':'middle',class:'t-ink','font-size':13,'font-weight':700},svg,d.z+'p');
+  el('text',{x:cx,y:cy+14,'text-anchor':'middle',class:'t-muted','font-size':12},svg,d.n+'n');
+  el('text',{x:16,y:30,class:'t-sym','font-size':24},svg,ION.sym);
+  if(q!==0){
+    const cls=q>0?'br-pos':'br-neg';
+    el('path',{d:'M38 14H22V346H38',class:cls},svg); el('path',{d:'M342 14H358V346H342',class:cls},svg);
+    el('text',{x:363,y:24,class:q>0?'q-pos':'q-neg','font-size':20},svg,qShort(q));
+  }
+  $('#ionSymbol').innerHTML=ION.sym+sup(q);
+  $('#ionP').textContent=d.z; $('#ionE').textContent=ION.e; $('#ionQ').textContent=qText(q);
+  $('#ionCfg').textContent=I.join(',')||'none';
+  $('#eRemove').disabled=ION.e<=Math.max(0,d.z-4);
+  $('#eAdd').disabled=ION.e>=d.z+4;
+  $('#eReset').disabled=ION.e===d.z;
+  const v=ionVerdict(), box=$('#ionVerdict');
+  box.className='verdict '+v.cls; box.innerHTML=`<strong>${v.title}</strong><span>${v.body}</span>`;
+}
+function ionVerdict(){
+  const d=EL[ION.sym], q=d.z-ION.e, target=ionCharge(ION.sym), A=cfg(d.z), outer=A[A.length-1];
+  const nm=d.name.toLowerCase(), ionName=d.metal?nm+' ion':d.ion+' ion', label=ION.sym+sup(q);
+  if(q===0) return {cls:'', title:`${d.name} atom`, body: d.metal
+    ? `It has ${pl(outer,'electron')} in its outer shell (group ${d.group}). Metal atoms lose their outer electrons. Try removing ${d.group}.`
+    : `It has ${pl(outer,'electron')} in its outer shell (group ${d.group}), so it needs ${8-d.group} more to fill it. Non-metal atoms gain electrons. Try adding ${8-d.group}.`};
+  if(q===target) return {cls:'good', title:`${label}: a ${ionName}`,
+    body:`Its outer shell is full (${cfg(ION.e).join(',')}), the same arrangement as ${NOBLE[ION.e]}. It has ${d.z} protons but ${ION.e} electrons, so its charge is ${qText(q)}.`};
+  if(d.metal&&q>0&&q<target) return {cls:'', title:`${label}: not stable yet`, body:`It has lost ${pl(q,'electron')} so far. ${d.group-q} more to go before the outer shell is empty and the full shell underneath is exposed.`};
+  if(!d.metal&&q<0&&q>target) return {cls:'', title:`${label}: not stable yet`, body:`It has gained ${pl(-q,'electron')} so far. The outer shell needs ${pl((8-d.group)+q,'more electron')} to be full.`};
+  if(d.metal&&q>target) return {cls:'bad', title:`${label} does not form`, body:`To go this far, ${nm} would have to lose an electron from a full shell. That takes far too much energy.`};
+  if(!d.metal&&q<target) return {cls:'bad', title:`${label} does not form`, body:`The outer shell was already full, so the extra electron would have to start a new shell. This ion does not form.`};
+  if(d.metal) return {cls:'bad', title:'Metals lose electrons', body:`${d.name} would need ${8-d.group} extra electrons to fill its outer shell. Losing ${d.group} is much easier, so metals form positive ions.`};
+  return {cls:'bad', title:'Non-metals gain electrons', body:`${d.name} would have to lose all ${d.group} outer electrons. Gaining ${8-d.group} is much easier, so non-metals form negative ions.`};
+}
+$('#eRemove').addEventListener('click',()=>{ ION.e--; drawIon(); });
+$('#eAdd').addEventListener('click',()=>{ ION.e++; drawIon(); });
+$('#eReset').addEventListener('click',()=>{ ION.e=EL[ION.sym].z; drawIon(); });
+drawIon();
+
+/* ---------- station 2: ionic bonding ---------- */
+const METALS=['Li','Na','K','Mg','Ca','Al'], NONS=['F','Cl','O','S','N'];
+const B={m:'Na',n:'Cl',P:null,t:0,anim:null,run:0};
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const SLOTN=[-104,-76,-14,14,76,104,166,194]; // pairs top, right, bottom, left — received electrons land facing the metal
+const SLOTM={1:[0],2:[-32,32],3:[-42,0,42]};
+function plan(){
+  const c=EL[B.m].group, a=8-EL[B.n].group, L=c*a/gcd(c,a), nM=L/c, nN=L/a, T=[];
+  let j=0, fill=0;
+  for(let i=0;i<nM;i++) for(let k=0;k<c;k++){ T.push({i,k,j,s:(8-a)+fill}); if(++fill===a){fill=0;j++;} }
+  const col=(n,x)=>Array.from({length:n},(_,i)=>({x,y:180+(i-(n-1)/2)*112}));
+  return {c,a,nM,nN,T,mPos:col(nM,170),nPos:col(nN,430)};
+}
+const R_OUT=40;
+const polar=(p,deg,r=R_OUT)=>({x:p.x+r*Math.cos(deg*Math.PI/180),y:p.y+r*Math.sin(deg*Math.PI/180)});
+function formulaHTML(){ const P=B.P; return `${B.m}${P.nM>1?'<sub>'+P.nM+'</sub>':''}${B.n}${P.nN>1?'<sub>'+P.nN+'</sub>':''}`; }
+function formulaPlain(){ const P=B.P; return `${B.m}${P.nM>1?P.nM:''}${B.n}${P.nN>1?P.nN:''}`; }
+function drawBond(){
+  const P=B.P, svg=$('#bondSvg'), done=B.t, total=P.T.length; svg.textContent='';
+  let vM=1, vN=1; for(let x=0;x<Math.min(done+1,total);x++){ vM=Math.max(vM,P.T[x].i+1); vN=Math.max(vN,P.T[x].j+1); }
+  const flying=B.anim?done:-1;
+  for(let i=0;i<vM;i++){
+    const p=P.mPos[i], given=Math.min(P.c,Math.max(0,(flying>=0?done+1:done)-i*P.c)), complete=(i+1)*P.c<=done;
+    el('circle',{cx:p.x,cy:p.y,r:R_OUT,class:'shell'+(given===P.c?' gone':'')},svg);
+    el('text',{x:p.x,y:p.y+9,'text-anchor':'middle',class:'t-sym','font-size':26},svg,B.m);
+    for(let k=given;k<P.c;k++){ const e=polar(p,SLOTM[P.c][k]); cross(svg,e.x,e.y,5.5,'x-cat'); }
+    if(complete){ el('path',{d:`M${p.x-R_OUT-4} ${p.y-R_OUT-6}h-10v${2*R_OUT+12}h10`,class:'br-pos'},svg); el('path',{d:`M${p.x+R_OUT+4} ${p.y-R_OUT-6}h10v${2*R_OUT+12}h-10`,class:'br-pos'},svg);
+      el('text',{x:p.x+R_OUT+18,y:p.y-R_OUT+2,class:'q-pos','font-size':16},svg,qShort(P.c)); }
+  }
+  for(let j=0;j<vN;j++){
+    const p=P.nPos[j], complete=(j+1)*P.a<=done;
+    el('circle',{cx:p.x,cy:p.y,r:R_OUT,class:'shell'},svg);
+    el('text',{x:p.x,y:p.y+9,'text-anchor':'middle',class:'t-sym','font-size':26},svg,B.n);
+    for(let s=0;s<8-P.a;s++){ const e=polar(p,SLOTN[s]); el('circle',{cx:e.x,cy:e.y,r:5.5,class:'d-an'},svg); }
+    P.T.forEach((tr,x)=>{ if(tr.j===j&&x<done){ const e=polar(p,SLOTN[tr.s]); cross(svg,e.x,e.y,5.5,'x-cat'); } });
+    if(complete){ el('path',{d:`M${p.x-R_OUT-4} ${p.y-R_OUT-6}h-10v${2*R_OUT+12}h10`,class:'br-neg'},svg); el('path',{d:`M${p.x+R_OUT+4} ${p.y-R_OUT-6}h10v${2*R_OUT+12}h-10`,class:'br-neg'},svg);
+      el('text',{x:p.x+R_OUT+18,y:p.y-R_OUT+2,class:'q-neg','font-size':16},svg,qShort(-P.a)); }
+  }
+  if(B.anim){
+    const tr=P.T[done], a=polar(P.mPos[tr.i],SLOTM[P.c][tr.k]), b=polar(P.nPos[tr.j],SLOTN[tr.s]);
+    const u=B.anim.p, e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2, cx=(a.x+b.x)/2, cy=Math.min(a.y,b.y)-55;
+    const x=(1-e)*(1-e)*a.x+2*(1-e)*e*cx+e*e*b.x, y=(1-e)*(1-e)*a.y+2*(1-e)*e*cy+e*e*b.y;
+    el('path',{d:`M${a.x} ${a.y}Q${cx} ${cy} ${b.x} ${b.y}`,class:'shell gone'},svg);
+    cross(svg,x,y,6.5,'x-cat');
+  }
+}
+function bondText(){
+  const P=B.P, M=EL[B.m], N=EL[B.n], done=B.t, total=P.T.length, mn=M.name.toLowerCase(), nn=N.name.toLowerCase();
+  $('#bondEq').innerHTML=`<span>${mn} + ${nn}</span><span class="arrow">→</span>`+(done===total?`<span class="ans">${M.name.toLowerCase()} ${N.ion} (${formulaHTML()})</span>`:'<span class="arrow">?</span>');
+  let msg;
+  if(done===total) msg=`Done. Every ion now has a full outer shell. The ${M.name.toLowerCase()} ions (${B.m}${sup(P.c)}) and ${N.ion} ions (${B.n}${sup(-P.a)}) attract each other: that attraction is the ionic bond.`;
+  else {
+    const nx=P.T[done];
+    if(done===0) msg=`A ${mn} atom has ${pl(P.c,'electron')} in its outer shell. A ${nn} atom needs ${pl(P.a,'more electron')} to fill its outer shell.`;
+    else if(nx.j>0&&nx.s===8-P.a) msg=`Each ${nn} atom here has a full outer shell, but ${mn} still has an electron to give. Another ${nn} atom joins.`;
+    else if(nx.i>0&&nx.k===0) msg=`Each ${mn} atom here has given away all its outer electrons, but ${nn} still needs more. Another ${mn} atom joins.`;
+    else msg=`An electron moved from ${B.m} to ${B.n}. Keep going.`;
+  }
+  $('#bondNarr').innerHTML=`<span class="count">${done} of ${total} electrons transferred</span>${msg}`;
+  $('#stepBtn').disabled=$('#playBtn').disabled=done===total||!!B.anim;
+  const bal=$('#bondBalance');
+  bal.hidden=done!==total;
+  if(done===total){
+    bal.innerHTML=`<span class="lbl">Formula</span><span class="big">${formulaHTML()}</span>
+      <table><tr><td>${B.m}${sup(P.c)} ions</td><td>${P.nM} × (${qShort(P.c).length>1?qShort(P.c):'1+'})</td><td>= ${P.nM*P.c}+</td></tr>
+      <tr><td>${B.n}${sup(-P.a)} ions</td><td>${P.nN} × (${P.a}−)</td><td>= ${P.nN*P.a}−</td></tr>
+      <tr><td><b>Overall charge</b></td><td></td><td><b>0</b></td></tr></table>`;
+  }
+}
+function stepBond(after){
+  if(B.anim||B.t>=B.P.T.length) return;
+  const run=B.run, dur=reduceMotion?150:750, t0=performance.now();
+  B.anim={p:0}; bondText();
+  const tick=now=>{ if(run!==B.run) return; B.anim.p=Math.min(1,(now-t0)/dur); drawBond();
+    if(B.anim.p<1) requestAnimationFrame(tick); else { B.anim=null; B.t++; drawBond(); bondText(); if(after) after(run); } };
+  requestAnimationFrame(tick);
+}
+function playAll(){ const go=run=>{ if(run===B.run&&B.t<B.P.T.length) setTimeout(()=>{ if(run===B.run) stepBond(go); },reduceMotion?40:220); }; stepBond(go); }
+function resetBond(){ B.run++; B.anim=null; B.P=plan(); B.t=0; drawBond(); bondText(); }
+function chipRow(host,list,key,cls){
+  list.forEach(s=>{ const b=document.createElement('button'); b.className='chip '+cls; b.textContent=s; b.setAttribute('aria-label',EL[s].name); b.setAttribute('aria-pressed',B[key]===s);
+    b.addEventListener('click',()=>{ B[key]=s; host.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x.textContent===s)); $('#predictIn').value=''; $('#predictMsg').textContent=''; $('#predictMsg').className='msg'; resetBond(); });
+    host.appendChild(b); });
+}
+chipRow($('#metalPick'),METALS,'m','metal'); chipRow($('#nonPick'),NONS,'n','non');
+$('#stepBtn').addEventListener('click',()=>stepBond());
+$('#playBtn').addEventListener('click',playAll);
+$('#bondReset').addEventListener('click',resetBond);
+function checkPredict(){
+  const raw=$('#predictIn').value.replace(/\s+/g,'').replace(/[₀-₉]/g,ch=>'₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)), ans=formulaPlain(), m=$('#predictMsg');
+  const M=EL[B.m], N=EL[B.n];
+  if(!raw){ m.className='msg'; m.textContent='Type a formula first, for example NaCl.'; return; }
+  if(raw===ans){ m.className='msg good'; m.innerHTML=`Correct: ${formulaHTML()}. Now transfer the electrons to see why.`; }
+  else if(raw.toLowerCase()===ans.toLowerCase()){ m.className='msg bad'; m.textContent='The numbers are right. Check the capital letters: each symbol starts with a capital, then a small letter (Cl, not CL).'; }
+  else { m.className='msg bad'; m.innerHTML=`Not yet. ${M.name} forms ${B.m}${sup(ionCharge(B.m))} and ${N.name.toLowerCase()} forms ${B.n}${sup(ionCharge(B.n))}. How many of each make the total charge zero?`; }
+}
+$('#predictBtn').addEventListener('click',checkPredict);
+$('#predictIn').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPredict(); });
+resetBond();
+
+/* ---------- station 3: properties ---------- */
+const CMP={
+  NaCl:{cat:'Na',an:'Cl',q:1,rc:102,ra:181,mp:801,max:1400,dissolves:true,name:'Sodium chloride'},
+  MgO:{cat:'Mg',an:'O',q:2,rc:72,ra:140,mp:2852,max:3000,dissolves:false,name:'Magnesium oxide'}
+};
+const PR={cmp:'NaCl',T:25,water:false,circuit:true,ions:[],waters:[],found:{mp:false,cond:false,brittle:false},time:0,flow:0};
+const W=640,H=400, BOX={l:160,r:480,t:130,b:362}, ELX={neg:142,pos:498};
+const cv=$('#latCanvas'), ctx=cv.getContext('2d');
+let scale=1;
+window.sizeCanvas=function(){ const w=cv.clientWidth; if(!w) return; const dpr=Math.min(2,window.devicePixelRatio||1); cv.width=Math.round(w*dpr); cv.height=Math.round(w*10/16*dpr); scale=cv.width/W; };
+addEventListener('resize',sizeCanvas);
+function buildLattice(){
+  const C=CMP[PR.cmp], d=(C.rc+C.ra)*0.13, cols=8, rows=6, cx=320, by=BOX.b-C.ra*0.13-2;
+  PR.ions=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const pos=(r+c)%2===0, hx=cx+(c-(cols-1)/2)*d, hy=by-(rows-1-r)*d;
+    PR.ions.push({pos,hx,hy,x:hx,y:hy,vx:0,vy:0,rad:(pos?C.rc:C.ra)*0.13*0.92,w1:9+Math.random()*5,w2:9+Math.random()*5,p1:Math.random()*6.3,p2:Math.random()*6.3});
+  }
+  PR.waters=Array.from({length:34},()=>({x:BOX.l+Math.random()*(BOX.r-BOX.l),y:BOX.t+Math.random()*(BOX.b-BOX.t),a:Math.random()*6.3,vx:0,vy:0}));
+}
+const mobile=()=>PR.water||PR.T>=CMP[PR.cmp].mp;
+const lit=()=>mobile()&&PR.circuit;
+function updateSim(dt){
+  const C=CMP[PR.cmp], mob=mobile(), heat=PR.water?.3:Math.min(1,PR.T/C.mp);
+  PR.time+=dt;
+  if(!mob){
+    const A=.5+6*Math.pow(heat,1.6), k=Math.min(1,dt*5);
+    for(const o of PR.ions){ const tx=o.hx+A*Math.sin(PR.time*o.w1+o.p1), ty=o.hy+A*Math.sin(PR.time*o.w2+o.p2); o.x+=(tx-o.x)*k; o.y+=(ty-o.y)*k; o.vx=o.vy=0; }
+  } else {
+    const kick=PR.water?520:420+300*Math.min(1,(PR.T-C.mp)/500), drift=PR.circuit?70:0, vmax=PR.water?90:110;
+    for(const o of PR.ions){
+      o.vx+=(Math.random()-.5)*kick*dt+(o.pos?-drift:drift)*dt; o.vy+=(Math.random()-.5)*kick*dt;
+      o.vx*=.985; o.vy*=.985; const sp=Math.hypot(o.vx,o.vy); if(sp>vmax){o.vx*=vmax/sp;o.vy*=vmax/sp;}
+      o.x+=o.vx*dt; o.y+=o.vy*dt;
+    }
+    const sep=PR.water?10:2;
+    for(let i=0;i<PR.ions.length;i++) for(let j=i+1;j<PR.ions.length;j++){
+      const a=PR.ions[i], b=PR.ions[j], dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||.01, m=a.rad+b.rad+sep;
+      if(d<m){ const p=(m-d)/2, ux=dx/d, uy=dy/d; a.x-=ux*p; a.y-=uy*p; b.x+=ux*p; b.y+=uy*p; }
+    }
+    for(const o of PR.ions){
+      if(o.x<BOX.l+o.rad){o.x=BOX.l+o.rad;o.vx=Math.abs(o.vx);} if(o.x>BOX.r-o.rad){o.x=BOX.r-o.rad;o.vx=-Math.abs(o.vx);}
+      if(o.y<BOX.t+o.rad){o.y=BOX.t+o.rad;o.vy=Math.abs(o.vy);} if(o.y>BOX.b-o.rad){o.y=BOX.b-o.rad;o.vy=-Math.abs(o.vy);}
+    }
+  }
+  if(PR.water) for(const w of PR.waters){
+    w.vx+=(Math.random()-.5)*600*dt; w.vy+=(Math.random()-.5)*600*dt; w.vx*=.97; w.vy*=.97; w.x+=w.vx*dt; w.y+=w.vy*dt; w.a+=(Math.random()-.5)*4*dt;
+    if(w.x<BOX.l+6||w.x>BOX.r-6) w.vx*=-1; if(w.y<BOX.t+6||w.y>BOX.b-6) w.vy*=-1;
+    w.x=Math.max(BOX.l+6,Math.min(BOX.r-6,w.x)); w.y=Math.max(BOX.t+6,Math.min(BOX.b-6,w.y));
+  }
+  if(lit()) PR.flow+=dt*40;
+}
+function tok(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawSim(){
+  const c={ink:tok('--ink'),muted:tok('--muted'),line:tok('--line'),cat:tok('--cation'),catS:tok('--cation-soft'),an:tok('--anion'),anS:tok('--anion-soft'),water:tok('--water'),melt:tok('--melt'),surf:tok('--surface-2')};
+  ctx.setTransform(scale,0,0,scale,0,0); ctx.clearRect(0,0,W,H);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  // liquid
+  if(mobile()){ ctx.globalAlpha=.55; ctx.fillStyle=PR.water?c.water:c.melt; ctx.fillRect(122,BOX.t-6,396,BOX.b-BOX.t+12); ctx.globalAlpha=1; }
+  // beaker
+  ctx.strokeStyle=c.muted; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(118,92); ctx.lineTo(118,372); ctx.lineTo(522,372); ctx.lineTo(522,92); ctx.stroke();
+  // wires
+  const lw=lit();
+  ctx.strokeStyle=lw?c.ink:c.muted; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(ELX.neg,60); ctx.lineTo(ELX.neg,28); ctx.lineTo(236,28); ctx.moveTo(250,28); ctx.lineTo(380,28); ctx.moveTo(408,28); ctx.lineTo(ELX.pos,28); ctx.lineTo(ELX.pos,60); ctx.stroke();
+  if(lw){ ctx.save(); ctx.setLineDash([3,11]); ctx.lineDashOffset=PR.flow; ctx.strokeStyle=c.cat; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(ELX.pos,60); ctx.lineTo(ELX.pos,28); ctx.lineTo(408,28); ctx.moveTo(380,28); ctx.lineTo(250,28); ctx.moveTo(236,28); ctx.lineTo(ELX.neg,28); ctx.lineTo(ELX.neg,60); ctx.stroke(); ctx.restore(); }
+  // switch gap indicator when off
+  if(!PR.circuit){ ctx.fillStyle=c.surf; ctx.fillRect(300,20,30,16); ctx.strokeStyle=c.muted; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(300,28); ctx.lineTo(326,14); ctx.stroke(); }
+  // battery
+  ctx.strokeStyle=c.ink; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(236,20); ctx.lineTo(236,36); ctx.stroke(); ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(250,14); ctx.lineTo(250,42); ctx.stroke();
+  // bulb
+  if(lw){ const g=ctx.createRadialGradient(394,28,4,394,28,46); g.addColorStop(0,c.cat); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.globalAlpha=.7; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(394,28,46,0,6.3); ctx.fill(); ctx.globalAlpha=1; }
+  ctx.fillStyle=lw?c.catS:c.surf; ctx.strokeStyle=lw?c.cat:c.muted; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(394,28,13,0,6.3); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(385,36); ctx.lineTo(389,22); ctx.lineTo(394,32); ctx.lineTo(399,22); ctx.lineTo(403,36); ctx.stroke();
+  // electrodes
+  ctx.fillStyle=c.muted; ctx.fillRect(ELX.neg-6,60,12,BOX.b-80); ctx.fillRect(ELX.pos-6,60,12,BOX.b-80);
+  ctx.font='700 20px "JetBrains Mono", monospace'; ctx.textAlign='center';
+  ctx.fillStyle=c.an; ctx.fillText('−',ELX.neg-22,78); ctx.fillStyle=c.cat; ctx.fillText('+',ELX.pos+22,78);
+  // water molecules
+  if(PR.water) for(const w of PR.waters){ ctx.fillStyle=c.an; ctx.globalAlpha=.55; ctx.beginPath(); ctx.arc(w.x,w.y,4.5,0,6.3); ctx.fill();
+    for(const s of [-.95,.95]){ ctx.beginPath(); ctx.arc(w.x+7*Math.cos(w.a+s),w.y+7*Math.sin(w.a+s),2.6,0,6.3); ctx.fill(); } ctx.globalAlpha=1; }
+  // ions
+  const C=CMP[PR.cmp];
+  ctx.textBaseline='middle';
+  for(const o of PR.ions){
+    ctx.fillStyle=o.pos?c.catS:c.anS; ctx.strokeStyle=o.pos?c.cat:c.an; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(o.x,o.y,o.rad,0,6.3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=o.pos?c.cat:c.an; ctx.font=`700 ${Math.max(10,Math.min(15,o.rad*.95))}px "JetBrains Mono", monospace`;
+    ctx.fillText(o.pos?(C.q>1?C.q+'+':'+'):(C.q>1?C.q+'−':'−'),o.x,o.y+1);
+  }
+  ctx.textBaseline='alphabetic';
+  // labels
+  ctx.font='12px "JetBrains Mono", monospace'; ctx.fillStyle=c.muted; ctx.textAlign='left';
+  ctx.fillText('electrode (−)',ELX.neg-4,392-0); ctx.textAlign='right'; ctx.fillText('electrode (+)',ELX.pos+4,392);
+}
+const FIND=[
+  {k:'mp',t:'High melting point',how:'Heat a compound until it melts.',why:'It takes a lot of energy to overcome the strong electrostatic forces between the oppositely charged ions. MgO has 2+ and 2− ions, so its forces are stronger and it melts at a much higher temperature than NaCl.'},
+  {k:'cond',t:'Conducts only when molten or dissolved',how:'Melt or dissolve a compound with the circuit on.',why:'In a solid the ions are fixed in place. When melted or dissolved, the ions are free to move and carry charge through the liquid.'},
+  {k:'brittle',t:'Brittle',how:'Strike the crystal below.',why:'A small push moves a layer so that ions with the same charge line up. They repel and the crystal splits.'}
+];
+function renderFindings(){
+  $('#findings').innerHTML=FIND.map(f=>{ const ok=PR.found[f.k];
+    return `<div class="finding${ok?' found':''}"><span class="ft">${f.t}</span><span class="st">${ok?'Found':'Not yet'}</span><span class="fd">${ok?f.why:f.how}</span></div>`; }).join('');
+}
+function find(k){ if(!PR.found[k]){ PR.found[k]=true; renderFindings(); } }
+let lastKey='';
+function updatePropUI(){
+  const C=CMP[PR.cmp], mob=mobile(), state=PR.water?'aq':(mob?'liquid':'solid');
+  if(mob&&!PR.water) find('mp'); if(lit()) find('cond');
+  const T=PR.water?25:PR.T;
+  $('#propTemp').textContent=`${T} °C`;
+  const st=$('#propState'); st.className='pill'+(state==='solid'?'':' '+state); st.textContent=state==='aq'?'Dissolved in water (aq)':state==='liquid'?'Liquid (molten)':'Solid';
+  const b=$('#propBulb'); b.className='pill'+(lit()?' on':''); b.textContent=lit()?'Bulb lit':'Bulb off';
+  const f=C.cat+sup(C.q)+' and '+C.an+sup(-C.q), near=!PR.water&&!mob&&T>=C.mp*.6;
+  let cap;
+  if(state==='solid') cap=near
+    ? `${T} °C: the ions vibrate strongly, but the forces between them still hold the lattice together. ${PR.cmp} melts at ${C.mp} °C.`
+    : `Solid ${PR.cmp} at ${T} °C. Each ion is held in place by strong electrostatic forces from the oppositely charged ions around it. The ions vibrate but cannot move through the lattice` + (PR.circuit?', so no current flows.':'.');
+  else if(state==='liquid') cap=`Molten ${PR.cmp} at ${T} °C. Enough energy has been supplied to overcome the forces between the ions. The ${f} ions are free to move` + (PR.circuit?': positive ions drift to the negative electrode, negative ions to the positive electrode, and the bulb lights.':'. Switch the circuit on to test it.');
+  else cap=`${PR.cmp} dissolved in water. Water molecules separate the ions, which spread out and move freely` + (PR.circuit?'. They carry charge between the electrodes, so the bulb lights.':'. Switch the circuit on to test it.');
+  const key=cap; if(key!==lastKey){ $('#propCaption').innerHTML=cap; lastKey=key; }
+}
+function setCompound(k){
+  PR.cmp=k; const C=CMP[k];
+  document.querySelectorAll('#cmpPick button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===k));
+  const s=$('#tempSlider'); s.max=C.max; PR.T=Math.min(PR.T,C.max); s.value=PR.T; $('#tMax').textContent=C.max+' °C';
+  const m=$('#mpMark'); m.textContent=`melts ${C.mp} °C`; m.style.left=((C.mp-20)/(C.max-20)*100)+'%';
+  $('#cmpInfo').innerHTML=`${C.name}: ${C.cat}${sup(C.q)} and ${C.an}${sup(-C.q)} ions. Melting point ${C.mp} °C.`;
+  if(!C.dissolves){ PR.water=false; $('#waterTog').checked=false; }
+  $('#waterTog').disabled=!C.dissolves; $('#waterLbl').classList.toggle('dis',!C.dissolves);
+  $('#waterNote').textContent=C.dissolves?'':'Magnesium oxide does not dissolve in water, so test it by melting instead.';
+  s.disabled=PR.water;
+  buildLattice(); updatePropUI();
+}
+document.querySelectorAll('#cmpPick button').forEach(b=>b.addEventListener('click',()=>setCompound(b.dataset.c)));
+$('#tempSlider').addEventListener('input',e=>{ PR.T=+e.target.value; updatePropUI(); });
+$('#waterTog').addEventListener('change',e=>{ PR.water=e.target.checked; $('#tempSlider').disabled=PR.water; if(!PR.water) for(const o of PR.ions){o.vx=o.vy=0;} updatePropUI(); });
+$('#circuitTog').addEventListener('change',e=>{ PR.circuit=e.target.checked; updatePropUI(); });
+let lastT=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-lastT)/1000); lastT=now;
+  if(!$('#p-properties').hidden){ if(Math.abs(cv.width-Math.round(cv.clientWidth*Math.min(2,devicePixelRatio||1)))>1) sizeCanvas(); updateSim(dt); drawSim(); }
+  requestAnimationFrame(loop);
+}
+
+/* brittleness */
+(function buildBrittle(){
+  const svg=$('#brittleSvg'), s=54, x0=100, y0=86, rc=15, ra=24;
+  const top=el('g',{id:'topLayer'},svg), bot=el('g',{},svg);
+  for(let r=0;r<4;r++) for(let c=0;c<7;c++){
+    const pos=(r+c)%2===0, g=r<2?top:bot, x=x0+c*s, y=y0+r*s;
+    el('circle',{cx:x,cy:y,r:pos?rc:ra,class:pos?'ion-c':'ion-a'},g);
+    el('text',{x,y:y+5,'text-anchor':'middle',class:pos?'q-pos':'q-neg','font-size':pos?14:16},g,pos?'+':'−');
+  }
+  const fa=el('g',{id:'forceArrow',opacity:0},svg);
+  el('path',{d:'M18 113H66M54 101L68 113L54 125',class:'force'},fa);
+  el('text',{x:16,y:92,class:'t-ink','font-size':13,'font-weight':700},fa,'force');
+  const rm=el('g',{id:'repelMarks',opacity:0},svg);
+  for(let m=1;m<7;m++){ const x=x0+m*s; el('path',{d:`M${x} 154V168M${x-5} 159L${x} 153L${x+5} 159M${x-5} 163L${x} 169L${x+5} 163`,class:'repel'},rm); }
+  el('text',{x:18,y:294,class:'t-muted','font-size':12},svg,'Na⁺ (small) and Cl⁻ (large) ions, side view of two layers');
+})();
+let hitTimers=[];
+function resetHit(){ hitTimers.forEach(clearTimeout); hitTimers=[]; $('#topLayer').style.transform=''; $('#forceArrow').setAttribute('opacity',0); $('#repelMarks').setAttribute('opacity',0); $('#hitMsg').textContent=''; $('#hitMsg').className='msg'; $('#hitBtn').disabled=false; }
+$('#hitBtn').addEventListener('click',()=>{
+  resetHit(); $('#hitBtn').disabled=true; const tl=$('#topLayer'), q=reduceMotion?.15:1;
+  $('#forceArrow').setAttribute('opacity',1); $('#hitMsg').textContent='A force pushes the top layers sideways…';
+  hitTimers.push(setTimeout(()=>{ tl.style.transform='translate(54px,0)'; },250*q));
+  hitTimers.push(setTimeout(()=>{ tl.style.transform='translate(54px,-12px)'; $('#repelMarks').setAttribute('opacity',1); $('#hitMsg').innerHTML='Now each Na<sup>+</sup> sits above another Na<sup>+</sup>, and each Cl<sup>−</sup> above a Cl<sup>−</sup>. Like charges repel…'; },1150*q));
+  hitTimers.push(setTimeout(()=>{ tl.style.transform='translate(66px,-54px) rotate(-4deg)'; $('#hitMsg').className='msg bad'; $('#hitMsg').innerHTML='…so the layers push apart and the crystal shatters. Ionic compounds are <b>brittle</b>.'; find('brittle'); },2300*q));
+});
+$('#hitReset').addEventListener('click',resetHit);
+
+/* ---------- station 4: quiz ---------- */
+const QUIZ=[
+  {q:'A sodium atom has the electron arrangement 2,8,1. Which ion does it form?',o:['Na⁺','Na⁻','Na²⁺','Na⁷⁻'],a:0,e:'Sodium loses its 1 outer electron. It then has 11 protons and 10 electrons, so the charge is 1+.'},
+  {q:'Why does a chlorine atom form a Cl⁻ ion?',o:['It gains 1 electron to fill its outer shell','It loses 1 electron to empty its outer shell','It gains 1 proton','It loses 7 electrons'],a:0,e:'Chlorine is in group 7, so it has 7 outer electrons. Gaining 1 gives a full outer shell and one more electron than protons.'},
+  {q:'An oxide ion is O²⁻. How many electrons does it have? (Oxygen has 8 protons.)',o:['10','8','6','2'],a:0,e:'A 2− charge means two more electrons than protons: 8 + 2 = 10 electrons, arrangement 2,8.'},
+  {q:'What is the formula of magnesium oxide?',o:['MgO','Mg₂O','MgO₂','Mg₂O₂'],a:0,e:'Mg²⁺ and O²⁻: one of each makes the total charge zero.'},
+  {q:'What is the formula of calcium chloride?',o:['CaCl₂','CaCl','Ca₂Cl','CaCl₃'],a:0,e:'Ca²⁺ needs two Cl⁻ ions to balance its charge.'},
+  {q:'What is the formula of aluminium oxide?',o:['Al₂O₃','AlO','Al₃O₂','AlO₃'],a:0,e:'Al³⁺ and O²⁻. Two Al³⁺ give 6+ and three O²⁻ give 6−.'},
+  {q:'What holds the ions together in a giant ionic lattice?',o:['Strong electrostatic forces between oppositely charged ions, in all directions','Shared pairs of electrons between atoms','Weak forces between molecules','A sea of delocalised electrons'],a:0,e:'Ionic bonds are electrostatic attractions between positive and negative ions. They act in every direction through the lattice.'},
+  {q:'Why does solid sodium chloride NOT conduct electricity?',o:['Its ions are fixed in place and cannot move','It contains no charged particles','Its electrons are too tightly held to the nucleus only','The lattice is too cold'],a:0,e:'Solid NaCl is full of ions, but they are held in fixed positions. Charge can only flow when the ions are free to move.'},
+  {q:'Which particles carry the charge when molten sodium chloride conducts?',o:['Na⁺ and Cl⁻ ions','Electrons moving through the liquid','Neutral sodium atoms','Water molecules'],a:0,e:'In the molten compound the ions move: positive ions to the negative electrode, negative ions to the positive electrode.'},
+  {q:'Magnesium oxide melts at 2852 °C, sodium chloride at 801 °C. Why is MgO\'s melting point higher?',o:['Its ions have larger charges (2+ and 2−), so the attraction between them is stronger','MgO has covalent bonds','MgO is a smaller molecule','Magnesium is a heavier atom than sodium'],a:0,e:'Ions with larger charges attract each other more strongly, so more energy is needed to overcome the forces in the lattice.'}
+];
+const QS={ans:{}};
+function shuffleOnce(){ QUIZ.forEach(it=>{ const idx=it.o.map((_,i)=>i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];} it.order=idx; }); }
+function renderQuiz(){
+  const host=$('#quiz'); host.innerHTML='';
+  QUIZ.forEach((it,n)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML=`<span class="qn">Question ${n+1}</span><p class="qt">${it.q}</p><div class="opts"></div><p class="fb" hidden></p>`;
+    const opts=d.querySelector('.opts'), fb=d.querySelector('.fb');
+    it.order.forEach(oi=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=it.o[oi]; b.dataset.i=oi;
+      b.addEventListener('click',()=>{ if(n in QS.ans) return; QS.ans[n]=oi;
+        opts.querySelectorAll('.opt').forEach(x=>{ x.disabled=true; if(+x.dataset.i===it.a) x.classList.add('right'); });
+        if(oi!==it.a) b.classList.add('wrong');
+        fb.hidden=false; fb.innerHTML=`<b>${oi===it.a?'Correct.':'Not quite.'}</b> ${it.e}`; score(); });
+      opts.appendChild(b);
+    });
+    host.appendChild(d);
+  });
+  score();
+}
+function score(){ const right=Object.keys(QS.ans).filter(k=>QS.ans[k]===QUIZ[k].a).length; $('#score').textContent=`${right} / ${QUIZ.length}`; }
+$('#quizReset').addEventListener('click',()=>{ QS.ans={}; shuffleOnce(); renderQuiz(); });
+shuffleOnce(); renderQuiz();
+
+/* ---------- start ---------- */
+renderFindings(); setCompound('NaCl'); requestAnimationFrame(loop);
+(function(){ const h=(location.hash||'').slice(1); if(TABS.includes(h)) showTab(h); })();
+
+</script>
+</body>
+</html>
